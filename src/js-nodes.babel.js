@@ -90,10 +90,24 @@ export class Node {
 		this.loc = null;
 	}
 
+	[Symbol.iterator] () {
+		var value = this, done = false;
+		return {
+			next() {
+				if (!done) {
+					done = true;
+					return {done, value};
+				} else {
+					return {done}
+				}
+			}
+		};
+	}
+
 	toJS(o) {
 		return this;
 	}
-	
+
 	from(origin) {
 		if (origin.program.parameters.browser) {
 			var rootfile = (origin.type === 'Program') ?
@@ -105,7 +119,7 @@ export class Node {
 				filepath = path.basename(rootfile);
 			} else {
 				const dir = path.dirname(rootfile);
-				filepath = path.relative(dir, origin.filename);			
+				filepath = path.relative(dir, origin.filename);
 			}
 
 			var [left, up, right, down] = origin.position;
@@ -137,7 +151,7 @@ export class Statement extends Node {
 }
 
 export class EmptyStatement extends Statement {
-	
+
 }
 
 export class BlockStatement extends Statement {
@@ -313,13 +327,13 @@ export class FunctionExpression extends Expression {
 }
 
 export class Super extends Node {
-	
+
 }
 
 export class ClassExpression extends Expression {
 	constructor(id = null, superClass = null, body = []) {
 		super();
-		
+
 		this.id = id;
 		this.superClass = superClass;
 		this.body = new ClassBody(body);
@@ -336,7 +350,7 @@ export class ClassBody extends Node {
 export class MethodDefinition extends Node {
 	constructor(key, value, kind = "method", computed = false, isStatic = false) {
 		super();
-		
+
 		this.key = key;
 		this.value = value;
 		this.kind = kind;
@@ -520,3 +534,78 @@ export class AssignmentPattern extends Pattern {
 	}
 }
 
+
+
+export class ModuleDeclaration extends Node {
+
+}
+
+export class ModuleSpecifier extends Node {
+	constructor(local) {
+		super();
+
+		this.local = local;
+	}
+}
+
+export class ImportDeclaration extends ModuleDeclaration {
+	constructor(specifiers, source) {
+		super();
+
+		this.specifiers = specifiers;
+		this.source = source;
+	}
+}
+
+
+export class ImportSpecifier extends ModuleSpecifier {
+	cosntructor(local, imported = local) {
+		super(local);
+
+		this.imported = imported;
+	}
+}
+
+export class ImportDefaultSpecifier extends ModuleSpecifier {
+
+}
+
+
+
+
+
+
+
+export class ExportNamedDeclaration extends ModuleDeclaration {
+	constructor(declaration = null, specifiers = [], source = null) {
+		super();
+
+		this.declaration = declaration;
+		this.specifiers = specifiers;
+		this.source = source;
+	}
+}
+
+export class ExportSpecifiers extends ModuleSpecifier {
+	constructor(local, exported = local) {
+		super(local);
+
+		this.exported = exported;
+	}
+}
+
+export class ExportDefaultDeclaration extends ModuleDeclaration {
+	constructor(declaration) {
+		super();
+
+		this.declaration = declaration;
+	}
+}
+
+export class ExportAllDeclaration extends ModuleDeclaration {
+	constructor(source) {
+		super();
+
+		this.source = source;
+	}
+}

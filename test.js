@@ -295,20 +295,13 @@ co(function*(){
 		const test = ctrl.value;
 		const res = yield test.promise;
 		const max = 5;
-		var status = "";
-		for (let i = 0; i < max; i++) {
-			if (i < res)
-				status += cc.green('*');
-			else
-				status += cc.red('*');
-		}
 
 		if (res === max)
-			console.log(`${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${status}`);
+			console.log(`${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${cc.green('*')}`);
 		else {
 			const msg = descriptionTable[res];
-			const str = `${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${status}`;
-			console.log(`${cc.bgWhite(str)}${cc.bgWhite('\t' + msg + '\t')}`);
+			const str = `${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${cc.red('*')}`;
+			console.log(`${str}\t${msg}`);
 		}
 		if (res === max)
 			passed++;

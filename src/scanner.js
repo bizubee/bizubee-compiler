@@ -1,6 +1,4 @@
 
-"use strict";
-
 // javascript keywords
 const JS_KW = new Set([
 	"break",
@@ -106,7 +104,7 @@ const total = [
 					cursor.back();
 					this.value += rec.done();
 					return;
-				} 
+				}
 			}
 
 			this.value += rec.done();
@@ -125,7 +123,7 @@ const total = [
 
 				if (c === "'" && !escape)
 					return;
-				
+
 				if (escape)
 					escape = false;
 				if (c === '\\')
@@ -324,7 +322,7 @@ const total = [
 ];
 
 
-function Cursor(csrc) {
+export function Cursor(csrc) {
 	var i = 0, apis = new Set();
 	var x = 0, lines = [];
 	var buffered = false, cbuff = [];
@@ -413,18 +411,18 @@ function Cursor(csrc) {
 	}
 }
 
-function keywordType(token) {
+export function keywordType(token) {
 	if (token.tag === token.value.toUpperCase()) {
 		if (JSL_KW.has(token.value))
 			return 'bz';
 		if (JS_KW.has(token.value))
 			return 'js';
 	}
-	
+
 	return null;
 }
 
-function Token(value, tag, pos) {
+export function Token(value, tag, pos) {
 	this.position = pos || [null, null];
 	this.begin = false;
 	this.value = value;
@@ -443,7 +441,7 @@ function Token(value, tag, pos) {
 	            x++;
 	        }
 	    }
-	    
+
 	    return {
             first_column: this.position[0],
             first_line: this.position[1],
@@ -480,7 +478,7 @@ function getInterpolationTokens(cursor) {
 	}
 }
 
-function* getTokensFromCursor(cursor) {
+export function* getTokensFromCursor(cursor) {
 	var
 	pos         = [0, 0],
 	match 		= null,
@@ -511,23 +509,23 @@ function* getTokensFromCursor(cursor) {
 
 		if (match === null) {
 			if (prevmatch !== null) {
-				
+
 				stress++;
 				if (stress === threshold || ended){
 					while (stress > 0) {
 						cursor.back();
 						stress--;
 					}
-                    
+
 					if (prevmatch.begin)
 						prevmatch.fetch(cursor);
-					
+
 					prevmatch.position = pos;
                     pos = cursor.position();
-					
+
 					trail.push(prevmatch.tag);
 					yield prevmatch;
-                    
+
 					prevmatch = null;
 					token = "";
 				}
@@ -574,7 +572,7 @@ function findMatch(text, trail, prev) {
 				if (rule.tag instanceof Function) {
 					token = new Token(text, rule.tag(text))
 				} else {
-					token = new Token(text, rule.tag);					
+					token = new Token(text, rule.tag);
 				}
 			} else {
 				token = new Token(text);
@@ -582,7 +580,7 @@ function findMatch(text, trail, prev) {
 
 			token.rule = rule;
 		}
-	
+
 		if ('process' in rule) {
 			rule.process(token);
 		}
@@ -593,11 +591,7 @@ function findMatch(text, trail, prev) {
 	return null;
 }
 
-function getTokensFromSource(csrc) {
+export function getTokensFromSource(csrc) {
 	var cursor = new Cursor(csrc);
 	return getTokensFromCursor(cursor);
 }
-
-exports.keywordType = keywordType;
-exports.Token = Token;
-exports.getTokensFromSource = getTokensFromSource;

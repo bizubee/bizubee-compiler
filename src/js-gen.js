@@ -5,7 +5,7 @@ const bz = require('./bz-nodes');
 const js = require('./js-nodes');
 const nuVar = require('./vargen').nuVar;
 
-module.exports.getJSVar = (name, constant) => {
+export function getJSVar(name, constant) {
     constant = constant || false;
     return new js.VariableDeclaration(
         [new js.AssignmentExpression(
@@ -16,8 +16,7 @@ module.exports.getJSVar = (name, constant) => {
         (constant) ? 'const' : 'let'
     );
 }
-
-module.exports.getJSAssign = (name, value, type) => {
+export function getJSAssign(name, value, type) {
     let id = new js.Identifier(name);
     let assign = new js.AssignmentExpression(
         '=',
@@ -35,62 +34,29 @@ module.exports.getJSAssign = (name, value, type) => {
     }
 }
 
-module.exports.getJSDeclare = (pattern, jvalue, type) => {
+export function getJSDeclare(pattern, jvalue, type) {
     type = type || 'const';
-    if (pattern instanceof bz.Identifier || pattern instanceof js.Identifier) {
+    if (pattern instanceof bz.Node || pattern instanceof js.Identifier) {
         return new js.VariableDeclaration([
                 new js.VariableDeclarator(pattern.toJS({}), jvalue)
             ], type);
     }
-    
+
     if (pattern instanceof String) {
         return new js.VariableDeclaration([
                 new js.VariableDeclarator(new js.Identifier(pattern), jvalue)
             ], type);
     }
-    
-    if (pattern instanceof bz.ArrayPattern) {
-        let arr = [];
-        for (let sp of pattern.extractAssigns(jvalue)) {
-            arr.push(sp);
-        }
-
-        return new js.VariableDeclaration(arr, type);        
-    }
-
-
-    if (pattern instanceof bz.ObjectPattern) {
-        let source, arr;
-        if (jvalue instanceof js.Identifier) {
-            arr = [];
-            source = jvalue;
-        } else {
-            let rvar = nuVar('patternPlaceholder');
-            let idf = new js.Identifier(rvar);
-            arr = [new js.VariableDeclarator(idf, jvalue)];
-            source = new js.Identifier(rvar);
-        }
-
-        for (let sp of pattern.extractAssigns(source)) {
-            arr.push(sp);
-        }
-
-        return new js.VariableDeclaration(arr, type);        
-    }
-
-    if (pattern instanceof bzIdentifier) {
-        return new js.VariableDeclaration([new js.VariableDeclarator(pattern, jvalue)], type);
-    }
 
     pattern.error('Invalid declaration type!');
 }
 
-module.exports.getJSMethodCall = (names, args) => {
+export function getJSMethodCall(names, args) {
     return new js.CallExpression(
         exports.getJSMemberExpression(names), args);
 }
 
-module.exports.getJSMemberExpression = (names) => {
+export function getJSMemberExpression(names) {
     if (names.length === 0) {
         throw new Error('Must have at least one man!');
     } else {
@@ -103,7 +69,7 @@ module.exports.getJSMemberExpression = (names) => {
     }
 }
 
-module.exports.getJSIterable = (target) => {
+export function getJSIterable(target) {
     return new js.CallExpression(
         new js.MemberExpression(
             target,
@@ -113,8 +79,7 @@ module.exports.getJSIterable = (target) => {
         );
 }
 
-// returns 
-module.exports.getJSConditional = (identifier, def) => {
+export function getJSConditional(identifier, def) {
     if (identifier instanceof js.Identifier) {
         return new js.ConditionalExpression(
             new js.BinaryExpression('===', identifier, new js.Identifier('undefined')),

@@ -1,9 +1,7 @@
 
-"use strict";
+import {repeat, addSpacing} from './format';
 
-const fmt = require('./format');
-
-class Line {
+export class Line {
 	constructor(string, tabbing) {
 		let array = [];
 		let offset = 0;
@@ -11,7 +9,7 @@ class Line {
 			if (c === '\t') {
 				let tab = tabbing - offset % tabbing;
 				offset += tab;
-				array.push(fmt.repeat(' ', tab));
+				array.push(repeat(' ', tab));
 			} else {
 				offset += 1;
 				array.push(c);
@@ -53,7 +51,7 @@ class Line {
 	}
 }
 
-class Lines {
+export class Lines {
 	constructor(csrc, tabbing) {
 		this._csrc = csrc;
 		this.tabbing = tabbing;
@@ -90,10 +88,10 @@ class Lines {
             else
                 throw new Error(`Syntax error at position ${x},${y+1} in file '${filename}':\n\t${text}`);
         }
-        
+
         if (filename === null)
         	output.log(`SyntaxError: ${text}\n\ton line ${y + 1} in VM:`);
-        else 
+        else
         	output.log(`SyntaxError: ${text}\n\ton line ${y + 1} in file '${filename}'`);
         output.log();
         output.log();
@@ -101,11 +99,11 @@ class Lines {
 
         for (let line of this) {
             if (Math.abs(i - y) < 6) {
-                output.log(`${fmt.addSpacing(i + 1, 6)}|\t\t${line.untabbed}`);
+                output.log(`${addSpacing(i + 1, 6)}|\t\t${line.untabbed}`);
 
                 if (i === y) {
                     let offset = line.map(x);
-                    output.log(`${fmt.addSpacing('', 6)} \t\t${fmt.repeat(' ', offset)}^`);
+                    output.log(`${addSpacing('', 6)} \t\t${repeat(' ', offset)}^`);
                 }
             }
 
@@ -115,6 +113,3 @@ class Lines {
         process.exit();
 	}
 }
-
-exports.Line = Line;
-exports.Lines = Lines;

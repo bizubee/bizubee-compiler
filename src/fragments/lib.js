@@ -1,15 +1,15 @@
 (function(){
     "use strict";
-    
+
     const symbols = {
         observer: Symbol('Observer symbol'),
         default: Symbol('Default symbol')
     };
-    
+
     const returnVal = function(val) {
         return val;
     };
-    
+
     const api = {
         symbols,
         async(fn) {
@@ -52,46 +52,46 @@
         			if (first) {
         				if (value !== undefined)
         					throw new Error('First sent value must not exist!');
-        
+
         				let p = new Promise(function(win, fail) {
         					onsend = win;
         					onsendfail = fail;
         				});
-        
+
         				first = false;
         				api.code().then(done);
-        
+
         				return p;
         			} else {
         				let p = new Promise(function(win, fail) {
         					onsend = win;
         					onsendfail = fail;
         				});
-        
+
         				onnext(value);
-        
+
         				return p;
         			}
         		}
         	};
-        
+
         	let api = {
         		send(value) {
         			onsend({
         				value: value,
         				done: false
         			});
-        
+
         			let npromise = new Promise(function(win, fail) {
         				onnext = win;
         				onnextfail = fail;
         			});
-        
+
         			return npromise;
         		},
         		observable: observable
         	};
-        
+
         	return api;
         },
         rest(iterable) {
@@ -106,7 +106,7 @@
         	for (let i = index; i < args.length; i++) {
         		arr.push(args[i]);
         	}
-        
+
         	return arr;
         },
         * iter(al) {
@@ -121,13 +121,13 @@
         			argv.push(arg);
         		}
         	}
-        	
+
         	return argv;
         },
         last() {
         	if (arguments.length === 0)
         		return;
-        	
+
         	return arguments[arguments.length - 1];
         },
         classify(cls, protoProps, staticProps) {
@@ -141,31 +141,31 @@
         			});
         		}
         	}
-        	
+
         	for (var key in staticProps) {
         	    cls[key] = staticProps[key];
         	}
-        	
+
         	return cls;
         },
         * keys(obj) {
             for (var key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     yield key;
-                }    
+                }
             }
         }
     }
-    
+
     api[symbols.default] = api;
-    
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     } else {
         let modules = null;
-        
+
         const modcache = new Map();
-        
+
         api.setModules = function(mdls) {
             modules = mdls;
         };
@@ -173,16 +173,16 @@
             if (n === 0) {
                 return api;
             }
-            
+
             if (modules.hasOwnProperty(n)) {
                 if (modcache.has(n)) {
                     return modcache.get(n);
                 } else {
                     const exports   = {};
                     const modfn     = modules[n];
-                    
+
                     modfn(exports);
-                    
+
                     modcache.set(n, exports);
                     return exports;
                 }
@@ -190,7 +190,7 @@
                 throw new Error(`Cannot find module #${n}!`);
             }
         };
-        
+
         return api;
     }
 }).apply(this, []);

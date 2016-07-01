@@ -1,7 +1,7 @@
 "use strict";
 
 
-function Queue() {
+export function Queue() {
 	var
 	mouth = null,
 	ass = null,
@@ -14,7 +14,7 @@ function Queue() {
 			next: null,
 		};
 	}
-	
+
 	// consume a value into the queue
 	this.eat = function(value) {
 		var nd = node(value);
@@ -37,17 +37,17 @@ function Queue() {
 		} else {
 			let value = mouth.value;
 			if (length === 1) {
-				mouth = ass = null;	
+				mouth = ass = null;
 			} else {
 				mouth = mouth.next;
 				mouth.prev = null;
 			}
-			
+
 			length--;
-			
+
 			return value;
 		}
-	} 
+	}
 
 	// defecate a value from the queue
 	this.crap = function() {
@@ -61,7 +61,7 @@ function Queue() {
 				ass = ass.prev;
 				ass.next = null;
 			}
-	
+
 			length--;
 
 			return value;
@@ -90,7 +90,7 @@ function Queue() {
 			}
 			n++;
 		}
-		
+
 		throw new Error(`Index ${i} out of range!`);
 	}
 
@@ -112,8 +112,7 @@ function Queue() {
 	});
 }
 
-
-function DropoutQueue(size) {
+export function DropoutQueue(size) {
 	var
 	start 	= 0,
 	length 	= 0,
@@ -134,9 +133,9 @@ function DropoutQueue(size) {
 	}
 }
 
-function PeekableGenerator(gen) {
+export function PeekableGenerator(gen) {
 	let done = false, buff = [];
-	
+
 	this.next = function() {
 		if (buff.length > 0) {
 			return buff.shift();
@@ -148,12 +147,12 @@ function PeekableGenerator(gen) {
 			}
 		}
 	}
-		
+
 	this.peek = function(n) {
 		if (gen instanceof PeekableGenerator) {
 			return gen.peek(n);
 		}
-		
+
 		n = n || 0;
 		while (n >= buff.length) {
 			if (done) {
@@ -167,7 +166,7 @@ function PeekableGenerator(gen) {
 
 		return buff[n];
 	}
-	
+
 	this.peekValue = function(n) {
 		try {
 			let ctrl = this.peek(n);
@@ -176,14 +175,8 @@ function PeekableGenerator(gen) {
 			return null;
 		}
 	}
-	
+
 	this[Symbol.iterator] = function() {
 		return this;
 	}
 }
-
-exports.PeekableGenerator = PeekableGenerator;
-exports.Queue = Queue;
-exports.DropoutQueue = DropoutQueue;
-
-

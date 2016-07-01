@@ -1,14 +1,14 @@
-"use strict";
 
-const scanner 		= require("./scanner");
-const collectibles 	= require("./collectibles");
+import {PeekableGenerator} from './collectibles';
+import {getTokensFromSource, keywordType, Token} from './scanner';
+
 const filters = [];
 
 function pgen(gen) {
-	if (gen instanceof collectibles.PeekableGenerator) {
+	if (gen instanceof PeekableGenerator) {
 		return gen;
 	} else {
-		return new collectibles.PeekableGenerator(gen);
+		return new PeekableGenerator(gen);
 	}
 }
 
@@ -47,7 +47,7 @@ function getIndent(token) {
 			tabbing++;
 		}
 	}
-} 
+}
 
 function* getEnd(gen, begin) {
 	gen = pgen(gen);
@@ -87,12 +87,12 @@ function* getIndentEnd(gen, token) {
 			yield end;
 			skipyield = true;
 		}
-		
+
 		if (!skipyield)
 			yield token;
 		else
 			skipyield = false;
-		
+
 		let lookahead = gen.peek();
 		if (!lookahead.value)
 			throw new Error('This should not happen!');
@@ -101,27 +101,27 @@ function* getIndentEnd(gen, token) {
 			if (future.tag in reverseSymetric) {
 				return future;
 			}
-			
+
 			if (future.tag === 'ENDLN' && getIndent(future) < indent) {
 				return future;
 			}
-			
+
 			if (future.tag === 'BLOCK_RIGHT') {
-				return future;				
+				return future;
 			}
-			
+
 			if (future.tag === 'EOF') {
 				return future;
 			}
 		}
 	}
-	
+
 	throw new Error('No end of indentation found');
 }
 
 function nextValue(iterator) {
 	var ctrl = iterator.next();
-	
+
 	if (ctrl.done) return null;
 	else return ctrl.value;
 }
@@ -177,10 +177,10 @@ filters.push(function* (gen) {
 	for (var token of gen) {
 		if (token.tag === 'WHITESPACE') continue;
 		if (token.tag === 'END_COMMENT') continue;
-		
+
 		yield token;
 	}
-	
+
 	yield virtualAfter(token, 'EOF');
 });
 
@@ -196,7 +196,7 @@ filters.push(function* (gen) {
 		'(',
 		'{'
 	]);
-	
+
 	const before = new Set([
 		'ASSIGN',
 		'ACCESS',
@@ -220,13 +220,13 @@ filters.push(function* (gen) {
 				if (prev !== null && prev.tag === 'ACCESS') {
 					token.tag = 'NAME';
 				}
-				
+
 				let next = gen.peek();
 				if (!next.done && next.value.tag === ':') {
 					token.tag = 'NAME';
 				}
 			}
-			
+
 			yield token;
 			prev = token;
 		}
@@ -297,11 +297,11 @@ filters.push(function* (gen) {
 
 	function* directAfterGen(gen) {
 		gen = pgen(gen);
-		
-		var 
+
+		var
 		end,
 		token 	= nextValue(gen);
-		
+
 		if (token.tag in obj) {
 			let func = obj[token.tag];
 
@@ -332,7 +332,7 @@ filters.push(function* (gen) {
 
 	function* afterExpressionGen(gen) {
 		gen = pgen(gen);
-		
+
 		let first = true;
 		for (var token of gen) {
 			if (token.tag === '{' && !first) {
@@ -518,7 +518,7 @@ filters.push(function* (gen) {
 				map.get(indent).push(pp);
 			}
 		}
-		
+
 		throw new Error('Unclosed parenthesis!');
 	}
 
@@ -530,7 +530,7 @@ filters.push(function* (gen) {
 			if (token.tag === '(') {
 				let list = [token];
 				let map = collect(gen, list);
-				let next = gen.next();					
+				let next = gen.next();
 
 				if (next.done) token = null;
 				else token = next.value;
@@ -539,7 +539,7 @@ filters.push(function* (gen) {
 					while (0 <-- i) {
 						for (let ppair of map.get(i)) {
 							if (START.has(list[ppair.index + 1].tag)) {
-								tagPair(ppair);	
+								tagPair(ppair);
 							}
 						}
 					}
@@ -685,7 +685,7 @@ filters.push(function* (gen) {
 			} else {
 				yield token;
 			}
-			
+
 			if (token.tag === 'OP_RIGHT') return;
 
 			end = yield* tagAssignables(nextTag(iter, ':', 'OP_RIGHT'));
@@ -904,7 +904,7 @@ filters.push(function* (gen) {
 		'VAR',
 		'CONST'
 	]);
-	
+
 	filters.push(function*(gen) {
 		gen = pgen(gen);
 		let prev = null;
@@ -912,13 +912,13 @@ filters.push(function* (gen) {
 			if (prev === null && token.tag !== 'ENDLN') {
 				yield virtualBefore(token, 'ENDLN');
 			}
-			
+
 			if (token.tag === ',' && declarative.has(prev)) {
 				continue;
 			}
-			
+
 			yield token;
-			prev = token.tag;	
+			prev = token.tag;
 		}
 	});
 }
@@ -937,20 +937,20 @@ filters.push(function* (gen) {
 					if (next.value.tag === 'CALL_LEFT') {
 						token.tag = 'Q_CALL';
 					}
-					
+
 					if (next.value.tag === 'INDEX_LEFT') {
 						token.tag = 'Q_INDEX';
 					}
 				}
 			}
-			
+
 			yield token;
 		}
 	});
 }
 
 {
-	// downgrade keyword "$" to name if it precedes following block 
+	// downgrade keyword "$" to name if it precedes following block
 	// statement types
 	const postval = new Set([
 		'IF',
@@ -980,7 +980,7 @@ filters.push(function* (gen) {
 				}
 			}
 			yield token;
-			
+
 			prev = token.tag;
 		}
 	})
@@ -996,7 +996,7 @@ filters.push(function* (gen) {
 			if (token.tag === '$') {
 				const next = gen.peek();
 				if (!postval.has(next.value.tag)) {
-					token.tag = 'NAME';					
+					token.tag = 'NAME';
 				}
 			}
 			yield token;
@@ -1026,11 +1026,11 @@ filters.push(function* (gen) {
 	});
 }
 
-exports.parseCharSrc = function(csrc) {
-	return exports.refineTokens(scanner.getTokensFromSource(csrc), csrc);
+export function parseCharSrc(csrc) {
+	return refineTokens(scanner.getTokensFromSource(csrc), csrc);
 }
 
-exports.refineTokens = function(iterable, src) {
+export function refineTokens(iterable, src) {
 	let filtered = iterable;
 	for (let filter of filters) {
 		filtered = filter(filtered);

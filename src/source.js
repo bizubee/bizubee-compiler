@@ -1,9 +1,5 @@
 
-"use strict";
-
-const fs = require('fs');
-
-class CharSource {
+export class CharSource {
 	[Symbol.iterator] () {
 		var i = 0;
 		return {
@@ -14,7 +10,7 @@ class CharSource {
 					value: c
 				};
 			}.bind(this)
-		}		
+		}
 	}
 
 	get() {
@@ -22,45 +18,7 @@ class CharSource {
 	}
 }
 
-exports.FileSource = class extends CharSource {
-	constructor(path) {
-		super();
-		var fd = fs.openSync(path, 'r');
-		var stats = fs.fstatSync(fd);
-		this._fd 		= fd;
-		this._buff 		= new Buffer(stats.size);
-		this._progress 	= 0;
-		this.filename 	= path;
-	}
-
-	get(i) {
-		if (i < this._buff.length) {
-			while (this._progress <= i) {
-				let pos = this._progress;
-				let read = fs.readSync(this._fd, this._buff, pos, 1, pos);
-				if (read) {
-					this._progress += read;
-				} else {
-					throw new Error('No bytes read!');
-				}
-			}
-
-			if (this._progres === this._buff.length) {
-				fs.close(this._fd);
-			}
-
-			return String.fromCharCode(this._buff[i]);
-		} else {
-			return null;
-		}
-	}
-}
-
-exports.StdinSource = class extends CharSource {
-
-}
-
-exports.StringSource = class extends CharSource {
+export class StringSource extends CharSource {
 	constructor(string) {
 		super();
 
