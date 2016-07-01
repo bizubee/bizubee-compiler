@@ -8421,7 +8421,7 @@ const actions = {
 window.onload = function(e) {
 	bzEditor = CodeMirror(document.getElementById('bz-editor'), {
 		value: Cookies.get('code') || '',
-		mode: 'coffeescript',
+		mode: 'bizubee',
 		theme: 'dracula',
 		lineNumbers: true
 	});
