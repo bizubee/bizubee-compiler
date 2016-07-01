@@ -1,9 +1,7 @@
 
-"use strict";
-
-const bz = require('./bz-nodes');
-const js = require('./js-nodes');
-const nuVar = require('./vargen').nuVar;
+import * as bz from './bz-nodes';
+import * as js from './js-nodes';
+import nuVar from './vargen';
 
 export function getJSVar(name, constant) {
     constant = constant || false;

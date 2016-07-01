@@ -1,7 +1,7 @@
 
 module.exports = function(grunt) {
-    require("load-grunt-tasks")(grunt);    
-    
+    require("load-grunt-tasks")(grunt);
+
     grunt.initConfig({
         package: grunt.file.readJSON('package.json'),
         babel: {
@@ -24,13 +24,15 @@ module.exports = function(grunt) {
         },
         jison: {
             target: {
-                options: {},
+                options: {
+                    'module-type': 'es'
+                },
                 files: {
                     'src/generated-parser.js':'src/parser.jison'
                 }
             }
         }
     });
-    
+
     grunt.registerTask('default', ['babel', 'jison']);
 };

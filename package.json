@@ -16,7 +16,7 @@
     "grunt": "^0.4.5",
     "grunt-bump": "^0.6.0",
     "grunt-jison": "^1.3.2",
-    "jison": "^0.4.15",
+    "jison": "GabrielRatener/jison",
     "load-grunt-tasks": "^3.3.0"
   },
   "scripts": {

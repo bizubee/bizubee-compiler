@@ -26,7 +26,7 @@ for (let key in symmetric) {
 function virtualAfter(token, tag) {
 	tag = tag || token.tag;
 	let pos = token.getPosition();
-	return new scanner.Token('', tag, [
+	return new Token('', tag, [
 		pos.last_column,
 		pos.last_line
 	]);
@@ -34,7 +34,7 @@ function virtualAfter(token, tag) {
 
 function virtualBefore(token, tag) {
 	tag = tag || token.tag;
-	return new scanner.Token('', tag, token.position);
+	return new Token('', tag, token.position);
 }
 
 function getIndent(token) {
@@ -215,7 +215,7 @@ filters.push(function* (gen) {
 		gen = pgen(gen);
 		let prev = null;
 		for (let token of gen) {
-			let kwtype = scanner.keywordType(token);
+			let kwtype = keywordType(token);
 			if (kwtype !== null) {
 				if (prev !== null && prev.tag === 'ACCESS') {
 					token.tag = 'NAME';
@@ -1026,8 +1026,8 @@ filters.push(function* (gen) {
 	});
 }
 
-export function parseCharSrc(csrc) {
-	return refineTokens(scanner.getTokensFromSource(csrc), csrc);
+export function tokenizeCharSrc(csrc) {
+	return refineTokens(getTokensFromSource(csrc), csrc);
 }
 
 export function refineTokens(iterable, src) {

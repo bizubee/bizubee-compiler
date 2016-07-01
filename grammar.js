@@ -91,7 +91,7 @@ case 74:
 
             if ($$[$0] instanceof yy.BlockStatement) this.$ = $$[$0].pos(this._$);
             else this.$ = new yy.BlockStatement([$$[$0]]).pos(this._$);
-
+        
 break;
 case 75:
  this.$ = new yy.BlockStatement($$[$0-1]).pos(this._$)
@@ -117,7 +117,7 @@ break;
 case 84:
 
             this.$ = new yy.TryStatement($$[$0]).pos(this._$)
-
+        
 break;
 case 85:
 
@@ -125,12 +125,12 @@ case 85:
                 $$[$0-3],
                 new yy.CatchClause($$[$0-1], $$[$0]).pos(_$[$0-1], _$[$0])
                 ).pos(this._$)
-
+        
 break;
 case 86:
 
             this.$ = new yy.TryStatement($$[$0-2], null, $$[$0]).pos(this._$)
-
+        
 break;
 case 87:
 
@@ -139,7 +139,7 @@ case 87:
                 new yy.CatchClause($$[$0-3], $$[$0-2]).pos(_$[$0-3], _$[$0-2]),
                 $$[$0]
                 ).pos(this._$)
-
+        
 break;
 case 89: case 90:
  this.$ = new yy.Property($$[$0-2], $$[$0]).pos(this._$)
@@ -156,32 +156,32 @@ break;
 case 97:
 
         this.$ = new yy.VariableDeclaration([new yy.VariableDeclarator($$[$0-2], $$[$0]).pos(_$[$0-2], _$[$0])], false).pos(this._$);
-
+    
 break;
 case 98:
 
         this.$ = new yy.VariableDeclaration([new yy.VariableDeclarator($$[$0], null).pos(_$[$0])], false).pos(this._$);
-
+    
 break;
 case 99:
 
         this.$ = new yy.VariableDeclaration([new yy.VariableDeclarator($$[$0-2], $$[$0]).pos(_$[$0-2], _$[$0])], true).pos(this._$);
-
+    
 break;
 case 100:
 
         this.$ = new yy.VariableDeclaration([new yy.VariableDeclarator($$[$0], null).pos(_$[$0])], true).pos(this._$);
-
+    
 break;
 case 101:
 
         this.$ = $$[$0-4].add(new yy.VariableDeclarator($$[$0-2], $$[$0]).pos(_$[$0-2], _$[$0])).pos(this._$);
-
+    
 break;
 case 102:
 
         this.$ = $$[$0-2].add(new yy.VariableDeclarator($$[$0], null).pos(_$[$0])).pos(this._$);
-
+    
 break;
 case 103: case 104:
  this.$ = new yy.ThisExpression().pos(this._$)
@@ -234,22 +234,22 @@ break;
 case 157: case 158:
 
         this.$ = new yy.FunctionExpression($$[$0-2], $$[$0], true).pos(this._$)
-
+    
 break;
 case 159: case 160:
 
         this.$ = new yy.FunctionExpression($$[$0-2], $$[$0], false).pos(this._$)
-
+    
 break;
 case 161:
 
         this.$ = new yy.FunctionExpression($$[$0-3], $$[$0], true, $$[$0-1]).pos(this._$)
-
+    
 break;
 case 162:
 
         this.$ = new yy.FunctionExpression($$[$0-3], $$[$0], false, $$[$0-1]).pos(this._$)
-
+    
 break;
 case 163:
  this.$ = new yy.Super().pos(this._$)
@@ -405,7 +405,7 @@ case 235:
  this.$ = new yy.ImportDefaultSpecifier($$[$0]).pos(this._$)
 break;
 case 236:
- this.$ = $$[$0-1]
+ this.$ = $$[$0-1] 
 break;
 case 237: case 238:
 this.$ = new yy.ImportDeclaration([$$[$0-2]], $$[$0]).pos(this._$)

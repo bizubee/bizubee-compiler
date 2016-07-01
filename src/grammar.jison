@@ -129,8 +129,8 @@ Statement:
 |   FunctionDeclaration
 |   ClassDeclaration
 |   VariableDeclaration
-|   BreakStatement                                 
-|   ContinueStatement     
+|   BreakStatement
+|   ContinueStatement
 |   Expression              %prec SHIFTER   { $$ = new yy.ExpressionStatement($1).pos(@$)}
 ;
 
@@ -176,7 +176,7 @@ String:
 ;
 
 Number:
-	'FLOAT' { $$ = new yy.NumberLiteral($1.value).pos(@$)} 
+	'FLOAT' { $$ = new yy.NumberLiteral($1.value).pos(@$)}
 |	'INT'   { $$ = new yy.NumberLiteral($1.value).pos(@$)}
 |   'HEX'   { $$ = new yy.NumberLiteral($1.value).pos(@$)}
 ;
@@ -196,7 +196,7 @@ BlockableStatement:
 ;
 
 BlockStatement:
-    'DO' Statement                              
+    'DO' Statement
         {
             if ($2 instanceof yy.BlockStatement) $$ = $2.pos(@$);
             else $$ = new yy.BlockStatement([$2]).pos(@$);
@@ -252,7 +252,7 @@ TryStatement:
 ;
 
 Property:
-    Identifier                         
+    Identifier
 |   Identifier          ':' Expression  { $$ = new yy.Property($1, $3).pos(@$)}
 |   String              ':' Expression  { $$ = new yy.Property($1, $3).pos(@$)}
 |   '[' Expression ']'  ':' Expression  { $$ = new yy.Property($2, $5).pos(@$)}
@@ -271,13 +271,13 @@ ObjectExpression:
 
 
 VariableDeclaration:
-    'VAR' Assignable 'ASSIGN' Expression { 
+    'VAR' Assignable 'ASSIGN' Expression {
         $$ = new yy.VariableDeclaration([new yy.VariableDeclarator($2, $4).pos(@2, @4)], false).pos(@$);
     }
 |   'VAR' Identifier {
         $$ = new yy.VariableDeclaration([new yy.VariableDeclarator($2, null).pos(@2)], false).pos(@$);
     }
-|   'CONST' Assignable 'ASSIGN' Expression { 
+|   'CONST' Assignable 'ASSIGN' Expression {
         $$ = new yy.VariableDeclaration([new yy.VariableDeclarator($2, $4).pos(@2, @4)], true).pos(@$);
     }
 |   'CONST' Identifier {
@@ -440,7 +440,7 @@ ClassLine:
 
 ClassBody:
     ClassLine                       { $$ = [$1]}
-|   ClassBody 'ENDLN' ClassLine     { $$ = $1.concat($3)}  
+|   ClassBody 'ENDLN' ClassLine     { $$ = $1.concat($3)}
 ;
 
 ClassExpression:
@@ -613,9 +613,9 @@ ExportNamedDeclaration:
         { $$ = new yy.ExportNamedDeclaration($2, []).pos(@$)}
 |   'EXPORT' FunctionDeclaration
         { $$ = new yy.ExportNamedDeclaration($2, []).pos(@$)}
-|   'EXPORT' ClassDeclaration                   
+|   'EXPORT' ClassDeclaration
         { $$ = new yy.ExportNamedDeclaration($2, []).pos(@$)}
-|   'EXPORT' 'EXP_LEFT' ExportSpecifiers 'EXP_RIGHT'                  
+|   'EXPORT' 'EXP_LEFT' ExportSpecifiers 'EXP_RIGHT'
         { $$ = new yy.ExportNamedDeclaration(null, $3).pos(@$)}
 ;
 
@@ -624,7 +624,7 @@ ExportDefaultDeclaration:
         { $$ = new yy.ExportDefaultDeclaration($3).pos(@$)}
 |   'EXPORT' 'DEFAULT' FunctionDeclaration
         { $$ = new yy.ExportDefaultDeclaration($3).pos(@$)}
-|   'EXPORT' 'DEFAULT' ClassDeclaration   
+|   'EXPORT' 'DEFAULT' ClassDeclaration
         { $$ = new yy.ExportDefaultDeclaration($3).pos(@$)}
 ;
 
@@ -632,7 +632,3 @@ ExportDefaultDeclaration:
 ValueExpression:
     '$' BlockableStatement  { $$ = new yy.ValueExpression($2).pos(@$)}
 ;
-
-
-
-

@@ -3,7 +3,6 @@ import * as js from './js-nodes';
 import escodegen from './dep/escodegen';
 import {Lines, Line} from './errors';
 import {Queue} from './collectibles';
-import {findAddition} from './extensions';
 import vargen from './vargen';
 import {
     getJSAssign,
@@ -12,10 +11,7 @@ import {
     getJSMethodCall,
     getJSMemberExpression
     } from './js-gen';
-import jsCompiler from './js-compiler';
-import lookup from './lookup';
-
-
+import {parseRawTokens} from './parser';
 
 const _ = null;
 
@@ -188,8 +184,10 @@ export class Node {
         this[IGNORE] = new Set();
         this.type = this.constructor.name;
         this.loc = null;
-        this.meta.compiled = false;
 
+        this.meta = {
+            compiled: false
+        };
     }
 
     getOpvars(n) {
@@ -372,16 +370,11 @@ export class Node {
 // includes block scopes and the program/module scope
 export class Scope extends Node {
     constructor(statements) {
-        const meta = {};
-
-        meta.opVars = [];
-        meta.forbiddenVars = new Set();
-        meta.functionDeclarations = new Map();
-
         super();
         this.body = statements;
-        // meta object contains all supplemental data regarding a node
-        this.meta = meta;
+        this.meta.opVars = [];
+        this.meta.forbiddenVars = new Set();
+        this.meta.functionDeclarations = new Map();
     }
 
     getJSStatements(o) {
@@ -409,7 +402,7 @@ export class Scope extends Node {
                     this.meta.forbiddenVars.add(opvar);
                 }
             } else {
-                let opvar = nuVar('opvar');
+                let opvar = this.program.vargen('opvar');
                 this.meta.opVars.push(opvar);
                 arr.push(opvar);
                 this.meta.forbiddenVars.add(opvar);
@@ -446,57 +439,10 @@ export class Scope extends Node {
                 );
             declarators.push(declarator);
         }
-
         if (declarators.length === 0) {
             return [];
         } else {
             return new js.VariableDeclaration(declarators, 'const');
-        }
-    }
-
-    * getJSLines(o) {
-
-        for (let line of this.body) {
-            // if line is a function declaration we compile the function
-            // then save it in a map to be put later in a const declaration at top of
-            // scope, cause all function declarations are 'bubbled' to the top of their scope
-
-            if (line instanceof FunctionDeclaration) {
-                const name = line.identifier.name;
-                if (this instanceof Program && name === 'main') {
-                    this.meta.containsMain = true;
-                }
-
-                if (this.meta.functionDeclarations.has(name)) {
-                    line.error('Cannot declare function more than once!');
-                }
-
-                this.meta.functionDeclarations.set(
-                    name,
-                    line.func.toJS(o)
-                    );
-
-                continue;
-            }
-
-            let nodes = line.toJS(o);
-            if (nodes instanceof Array) {
-                // if the js compilation is a serialisation (array) of nodes
-                // we must yield each node of the serialization individually
-
-                for (let subline of nodes) {
-                    yield statement(subline);
-                }
-            } else if (nodes instanceof js.Expression || nodes instanceof js.Statement) {
-                yield statement(nodes);
-            } else {
-                if (nodes instanceof js.Super) {
-                    yield nodes;
-                    continue;
-                }
-
-                line.error(`Invalid object ${typeof nodes}!`);
-            }
         }
     }
 }
@@ -541,17 +487,20 @@ export class Program extends Scope {
         let imports = [];
         let path = new js.Literal('' + LIB_PATH);
 
+
         for (let [remote, local] of this.meta.utilities) {
             imports.push(
                 new js.ImportSpecifier(
                     new js.Identifier(local),
                     new js.Identifier(remote)
-                ),
+                )
             );
         }
-        return new js.BlockStatement(
+        return new js.Program(
             [
-                new js.ImportDeclaration(imports, path),
+                ...(imports.length?
+                    new js.ImportDeclaration(imports, path) :
+                    []),
                 ...body
             ]
         ).from(this);
@@ -615,7 +564,7 @@ export class ControllStatement extends Statement {
     _label() {
         const target = this._target();
         if (target.label === null) {
-            const label = nuVar('label');
+            const label = this.program.vargen('label');
             target.label = label;
             return label;
         } else {
@@ -712,7 +661,7 @@ export class ReturnStatement extends Statement {
             if (this.after instanceof ReturnStatement)
                 this.after.error('Cannot return from function multiple times!');
 
-            let variableName    = nuVar('out');
+            let variableName    = this.program.vargen('out');
             let variable        = new js.Identifier(variableName);
             let lines           = [
                 getJSDeclare(variable, this.argument.toJS(o), 'const')
@@ -835,8 +784,8 @@ export class ForStatement extends Statement {
         if (!pfunc.async)
             this.error('Cannot have for-on loop in sync function!');
 
-        let right = nuVar('agen');   // variable placeholder for async generator expression
-        let ctrl = nuVar('stat');    // generator's {done(bool), value} variable
+        let right = this.program.vargen('agen');   // variable placeholder for async generator expression
+        let ctrl = this.program.vargen('stat');    // generator's {done(bool), value} variable
 
         // async gen expression, e.g.: asyncIterable[lib.symbols.observer]()
         let symbolVar = this.program.util('symbols');
@@ -1338,10 +1287,12 @@ export class ClassExpression extends Expression {
 	        }
 	    } else {
             let classifyVar = this.program.util('classify');
-	        let rapper = new js.Identifier(classifyVar), [
-	            cls,
-	            new js.ObjectExpression(props)
-	        ]);
+	        let rapper = new js.CallExpression(
+                new js.Identifier(classifyVar), [
+    	            cls,
+    	            new js.ObjectExpression(props)
+    	        ]
+            );
 
 	        if (statprops.length > 0) {
 	            rapper.arguments.push(
@@ -1425,20 +1376,18 @@ export class FunctionDeclaration extends Declaration {
                 ).from(this);
         else {
             let scope = this.getParentScope();
-            let declaration =  getJSDeclare(
-                this.identifier,
-                this.func.toJS(o),
-                'const'
-                ).from(this);
+            let expression = this.func.toJS(o);
+            let name = this.identifier.name;
 
             if (scope.meta.functionDeclarations.has(name)) {
                 line.error('Cannot declare function more than once!');
+                return;
             }
-
-            let name = scope.meta.functionDeclarations.set(
-                this.identifier.name,
-                declaration
+            scope.meta.functionDeclarations.set(
+                name,
+                expression
             );
+
             return [];
         }
     }
@@ -1572,18 +1521,18 @@ export class FunctionExpression extends Expression {
 
     asyncToJs(o, noparams = false) {
         let asyncVar = this.program.util('async');
-        return getJSMethodCall(
+        return new js.CallExpression(
             new js.Identifier(asyncVar),
             [this.generatorToJs(o, noparams)]
         );
     }
 
     asyncGeneratorToJs(o, noparams = false) {
-        let ctrlVar = this._ctrl = nuVar('ctrl');
+        let ctrlVar = this._ctrl = this.program.vargen('ctrl');
         let gocVar = this.program.util('getObservableCtrl');
         let ctrl = getJSAssign(
             ctrlVar,
-            getJSMethodCall(new js.Identifier(gocVar), []),
+            new js.CallExpression(new js.Identifier(gocVar), []),
             'const');
         let mem = new js.AssignmentExpression(
             '=',
@@ -2128,7 +2077,6 @@ export class TemplateString extends Expression {
 
     constructor(value, parts) {
         super(value);
-        const parser = require('./parser');
 
         this.parts = [];
         for (var part of parts) {
@@ -2137,12 +2085,12 @@ export class TemplateString extends Expression {
                 // if part is Array of tokens, parse then search for Expression in AST
                 // and reasign parent to this TemplateString
 
-                var ctrl = parser.parseRawTokens(part, {});
+                var ctrl = parseRawTokens(part, {});
                 if (ctrl.tree.body.length === 1) {
                     const node = ctrl.tree.body[0];
                     if (node instanceof ExpressionStatement) {
                         const expr = node.expression;
-                                                this.parts.push(expr);
+                        this.parts.push(expr);
                     } else {
                         this.parts.push(null);
                     }

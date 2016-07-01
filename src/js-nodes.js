@@ -1,6 +1,4 @@
 
-const path = require('path');
-
 const binaryOperator = new Set([
 	"==",
 	"!=",
@@ -86,7 +84,8 @@ function assertUpdateOperator(operator) {
 
 export class Node {
 	constructor() {
-		this.type = this.constructor.name;
+		// the .split('$')[0] adds rollup compatibility
+		this.type = this.constructor.name.split('$')[0];
 		this.loc = null;
 	}
 
@@ -96,7 +95,7 @@ export class Node {
 			next() {
 				if (!done) {
 					done = true;
-					return {done, value};
+					return {done: false, value};
 				} else {
 					return {done}
 				}
@@ -109,32 +108,19 @@ export class Node {
 	}
 
 	from(origin) {
-		if (origin.program.parameters.browser) {
-			var rootfile = (origin.type === 'Program') ?
-				origin.parameters.rootfile :
-				origin.program.parameters.rootfile;
-			var filepath;
-
-			if (rootfile === origin.filename) {
-				filepath = path.basename(rootfile);
-			} else {
-				const dir = path.dirname(rootfile);
-				filepath = path.relative(dir, origin.filename);
+		var [left, up, right, down] = origin.position;
+		this.loc = {
+			source: origin.program.meta.source,
+			start: {
+				column: left,
+				line: up + 1
+			},
+			end: {
+				column: right,
+				line: down + 1
 			}
+		};
 
-			var [left, up, right, down] = origin.position;
-			this.loc = {
-				source: filepath,
-				start: {
-					column: left,
-					line: up + 1
-				},
-				end: {
-					column: right,
-					line: down + 1
-				}
-			};
-		}
 		return this;
 	}
 }
@@ -559,7 +545,7 @@ export class ImportDeclaration extends ModuleDeclaration {
 
 
 export class ImportSpecifier extends ModuleSpecifier {
-	cosntructor(local, imported = local) {
+	constructor(local, imported = local) {
 		super(local);
 
 		this.imported = imported;
@@ -567,6 +553,10 @@ export class ImportSpecifier extends ModuleSpecifier {
 }
 
 export class ImportDefaultSpecifier extends ModuleSpecifier {
+
+}
+
+export class ImportNamespaceSpecifier extends ModuleSpecifier {
 
 }
 
@@ -586,7 +576,7 @@ export class ExportNamedDeclaration extends ModuleDeclaration {
 	}
 }
 
-export class ExportSpecifiers extends ModuleSpecifier {
+export class ExportSpecifier extends ModuleSpecifier {
 	constructor(local, exported = local) {
 		super(local);
 

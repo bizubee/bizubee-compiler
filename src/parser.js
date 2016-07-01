@@ -1,13 +1,11 @@
 
-
 import {generate} from './dep/escodegen';
 import {Parser} from './generated-parser';
-import {parseCharSrc, refineTokens} from './lexer';
+import {tokenizeCharSrc, refineTokens} from './lexer';
 import {Lines} from './errors';
 import {StringSource} from './source';
 import * as nodes from './bz-nodes';
 import {ParserAPI} from './parser-interface';
-
 
 // returns a ParserAPI as defined in parser-interface.js
 function control(tokens, parameters) {
@@ -90,14 +88,14 @@ export function parseString(string, parameters) {
 
 
 export function parseCharSrc(csrc, parameters) {
-	let gen = lexer.parseCharSrc(csrc);
+	let gen = tokenizeCharSrc(csrc);
 	parameters.source = csrc;
 	return control(gen, parameters);
 }
 
 
 export function parseRawTokens(tokens, parameters) {
-	let gen = lexer.refineTokens(tokens[Symbol.iterator]());
+	let gen = refineTokens(tokens[Symbol.iterator]());
 	return control(gen, parameters);
 }
 
