@@ -102,8 +102,6 @@ const POSITION_KEY = Symbol('position');
 const vars = new Set();
 const nodeQueue = new Queue();
 
-let LIB, DEFAULT;
-
 
 // string to js Identifier node
 function strtoid(name) {
@@ -112,10 +110,6 @@ function strtoid(name) {
 
 function defined(val) {
     return val !== undefined && val !== null;
-}
-
-function last(jsargs) {
-    return getJSMethodCall([LIB, 'last'], jsargs);
 }
 
 function assertBinaryOperator(operator) {
@@ -513,6 +507,17 @@ export class Program extends Scope {
 
         this.onBuild();
         this.meta.containsMain = false;
+        this.meta.utilities = new Map();
+    }
+
+    util(name) {
+        if (this.meta.utilities.has(name)) {
+            return this.meta.utilities.get(name);
+        } else {
+            let utilVar = this.vargen('_' + name, false);
+            this.meta.utilities.set(name, utilVar);
+            return utilVar;
+        }
     }
 
     forbid(name) {
@@ -523,13 +528,33 @@ export class Program extends Scope {
         return vargen(this.meta.forbiddenVars, name, forbid);
     }
 
-
     set parameters(params) {
         this[OKEY] = params;
     }
 
     get parameters() {
         return this[OKEY];
+    }
+
+    _toJS(o) {
+        let body = this.getJSStatements({}); // must come first
+        let imports = [];
+        let path = new js.Literal('' + LIB_PATH);
+
+        for (let [remote, local] of this.meta.utilities) {
+            imports.push(
+                new js.ImportSpecifier(
+                    new js.Identifier(local),
+                    new js.Identifier(remote)
+                ),
+            );
+        }
+        return new js.BlockStatement(
+            [
+                new js.ImportDeclaration(imports, path),
+                ...body
+            ]
+        ).from(this);
     }
 }
 
@@ -814,10 +839,11 @@ export class ForStatement extends Statement {
         let ctrl = nuVar('stat');    // generator's {done(bool), value} variable
 
         // async gen expression, e.g.: asyncIterable[lib.symbols.observer]()
+        let symbolVar = this.program.util('symbols');
         let asyncGen = new js.CallExpression(
             new js.MemberExpression(
                 this.right.toJS(),
-                getJSMemberExpression([LIB, 'symbols', 'observer']),
+                getJSMemberExpression([symbolVar, 'observer']),
                 true
                 ),
             []
@@ -1311,7 +1337,8 @@ export class ClassExpression extends Expression {
 	            return cls.from(this);
 	        }
 	    } else {
-	        let rapper = getJSMethodCall([LIB, 'classify'], [
+            let classifyVar = this.program.util('classify');
+	        let rapper = new js.Identifier(classifyVar), [
 	            cls,
 	            new js.ObjectExpression(props)
 	        ]);
@@ -1396,12 +1423,24 @@ export class FunctionDeclaration extends Declaration {
                 this.identifier,
                 this.func.toJS(o)
                 ).from(this);
-        else
-            return getJSDeclare(
+        else {
+            let scope = this.getParentScope();
+            let declaration =  getJSDeclare(
                 this.identifier,
                 this.func.toJS(o),
                 'const'
                 ).from(this);
+
+            if (scope.meta.functionDeclarations.has(name)) {
+                line.error('Cannot declare function more than once!');
+            }
+
+            let name = scope.meta.functionDeclarations.set(
+                this.identifier.name,
+                declaration
+            );
+            return [];
+        }
     }
 
     * extractVariables() {
@@ -1532,15 +1571,19 @@ export class FunctionExpression extends Expression {
     }
 
     asyncToJs(o, noparams = false) {
-        return getJSMethodCall([LIB, 'async'], [this.generatorToJs(o, noparams)]);
+        let asyncVar = this.program.util('async');
+        return getJSMethodCall(
+            new js.Identifier(asyncVar),
+            [this.generatorToJs(o, noparams)]
+        );
     }
 
     asyncGeneratorToJs(o, noparams = false) {
         let ctrlVar = this._ctrl = nuVar('ctrl');
-
+        let gocVar = this.program.util('getObservableCtrl');
         let ctrl = getJSAssign(
             ctrlVar,
-            getJSMethodCall([LIB, 'getObservableCtrl'], []),
+            getJSMethodCall(new js.Identifier(gocVar), []),
             'const');
         let mem = new js.AssignmentExpression(
             '=',

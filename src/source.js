@@ -3,13 +3,13 @@ export class CharSource {
 	[Symbol.iterator] () {
 		var i = 0;
 		return {
-			next: function() {
+			next() {
 				let c = this.get(i++);
 				return {
 					done: (c === null || c === undefined),
 					value: c
 				};
-			}.bind(this)
+			}
 		}
 	}
 
