@@ -2290,12 +2290,12 @@ export class ExportNamedDeclaration extends ExportDeclaration {
 
                 this.program.meta.functionDeclarations.set(
                     name,
-                    declaration.func.toJS(o)
+                    this.declaration.func.toJS(o)
                     );
 
                 return new js.ExportNamedDeclaration(
                     null,
-                    new js.ExportSpecifier(new js.Identifier(name))
+                    [new js.ExportSpecifier(new js.Identifier(name))]
                     ).from(this);
             } else {
                 return new js.ExportNamedDeclaration(
@@ -2325,7 +2325,7 @@ export class ExportDefaultDeclaration extends ExportDeclaration {
 
             this.program.meta.functionDeclarations.set(
                 name,
-                declaration.func.toJS(o)
+                this.declaration.func.toJS(o)
                 );
 
             return new js.ExportDefaultDeclaration(
