@@ -1,6 +1,6 @@
 {
   "name": "bizubee-compiler",
-  "version": "0.2.3",
+  "version": "1.0.1",
   "description": "The most intense programming language on Earth!",
   "main": "bizubee.js",
   "jsnext:main": "src/parser.js",

@@ -272,7 +272,7 @@ export class Node {
     toJS(o) {
         if (this.meta.compiled) {
             this.error(`Cannot recompile ${this.constructor.name} node!`);
-            throw new Error('Cannot compile node more than once!');
+            //throw new Error('Cannot compile node more than once!');
         } else {
             this.meta.compiled = true;
             return this._toJS(o);
@@ -2194,10 +2194,16 @@ export class ImportSpecifier extends ModuleSpecifier {
     }
 
     _toJS(o) {
-        return new js.ImportSpecifier(
-            this.local.toJS(o),
-            this.imported.toJS(o)
-            ).from(this);
+        let local, imported;
+        if (this.local === this.imported) {
+            local = imported = this.local.toJS(o);
+        } else {
+            local = this.local.toJS(o);
+            imported = this.imported.toJS(o);
+        }
+
+        return new js.ImportSpecifier(local, imported)
+            .from(this);
     }
 }
 
@@ -2243,10 +2249,16 @@ export class ExportSpecifier extends ModuleSpecifier {
     }
 
     _toJS(o) {
-        return new js.ExportSpecifier(
-            this.local.toJS(o),
-            this.exported.toJS(o)
-            ).from(this);
+        let local, exported;
+        if (this.local === this.exported) {
+            local = exported = this.local.toJS(o);
+        } else {
+            local = this.local.toJS(o);
+            exported = this.exported.toJS(o);
+        }
+
+        return new js.ExportSpecifier(local, exported)
+            .from(this);
     }
 }
 
@@ -2264,7 +2276,7 @@ export class ExportNamedDeclaration extends ExportDeclaration {
             return new js.ExportNamedDeclaration(
                 null,
                 this.specifiers.map(spec => spec.toJS(o)),
-                new js.Literal('' + this.path)
+                this.path? new js.Literal('' + this.path) : null
                 )
                 .from(this);
         } else {

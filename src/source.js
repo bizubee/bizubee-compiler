@@ -1,10 +1,10 @@
 
 export class CharSource {
 	[Symbol.iterator] () {
-		var i = 0;
+		var i = 0, me = this;
 		return {
 			next() {
-				let c = this.get(i++);
+				let c = me.get(i++);
 				return {
 					done: (c === null || c === undefined),
 					value: c
