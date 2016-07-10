@@ -1,13 +1,12 @@
-"use strict";
 
-const fs 		= require('fs');
-const co 		= require('co');
-const cc 		= require('cli-color');
-const Pipeline	= require('lazy-iterator');
-const bz 		= require('./src/parser');
-const lex 		= require('./src/lexer');
-const sources	= require('./src/source');
-const blib 		= require('./src/lib');
+import tangler from 'tangler'
+import fs from 'fs'
+import co from 'co'
+import cc from 'cli-color'
+import Pipeline from 'lazy-iterator'
+import * as bz from '../src/parser'
+import * as lex from '../src/lexer'
+import * as sources from '../src/source'
 
 const pad = function(str, len) {
 	str = str + "";
@@ -22,6 +21,7 @@ const pad = function(str, len) {
 	}
 }
 
+const cache = new Map();
 
 const descriptionTable = [
 	'Lexing error',
@@ -33,13 +33,13 @@ const descriptionTable = [
 
 const PADDING = 60;
 
-const FUN_DIR = `test/function`;
+const FUN_DIR = `function`;
 
 let CURRENT_CODE;
 
 let tests = [];
 // get array of test files
-const testFiles = new Set(fs.readdirSync('test/function/'));
+const testFiles = new Set(fs.readdirSync(`${__dirname}/function/`));
 const pipeline = new Pipeline();
 
 
@@ -48,6 +48,9 @@ let nullOut = {
 
 	}
 };
+
+const fail = cc.red('\u2718');
+const win = cc.green('\u2714');
 
 
 function TestKit(ctrl, promise) {
@@ -151,7 +154,8 @@ const startRgx =
 	/^test\( *('.*'), \([$a-zA-Z][$a-zA-Z0-9]*\) *-> *~? *{ *\n?$/;
 
 function* getLines(file) {
-	var csrc = new sources.FileSource(file);
+	var csrc = new sources
+		.StringSource(fs.readFileSync(file, 'utf8'));
 	var line = "", i = 0;
 	while (true) {
 		const c = csrc.get(i);
@@ -202,7 +206,26 @@ const discard = (el) => {
 	// do nothing
 }
 
-const runTests = co.wrap(function*({name, source, path}) {
+const resolver = {
+	resolveId(importee) {
+		return importee;
+	},
+	load(id) {
+		if (id === 'bizubee utils') {
+			return {source:
+				fs.readFileSync(`${__dirname}/bizubee-utilities.js`, 'utf8')};
+		} else {
+			const {source} = cache.get(id);
+			const ast = bz.parseString(source)
+				.getJSTree();
+			return {ast, context: this.context};
+		}
+	}
+}
+
+const blib = tangler.require('bizubee utils', null, resolver);
+
+const runTests = co.wrap(function*({name, source, path, id}) {
 	var promise;
 	var passed = 0;
 	const globalContext = {
@@ -222,11 +245,12 @@ const runTests = co.wrap(function*({name, source, path}) {
 	// compiler able to tokenize
 	try {
 		const csrc = new sources.StringSource(source);
-		for (var token of lex.parseCharSrc(csrc)) {
+		for (var token of lex.tokenizeCharSrc(csrc)) {
 			// do nothing
 		}
 		passed += 1;
 	} catch (e) {
+
 		return passed;
 	}
 
@@ -242,6 +266,7 @@ const runTests = co.wrap(function*({name, source, path}) {
 		discard(ctrl.tree);
 		passed += 1;
 	} catch (e) {
+
 		return passed;
 	}
 
@@ -250,6 +275,7 @@ const runTests = co.wrap(function*({name, source, path}) {
 		ctrl.getJSTree();
 		passed += 1;
 	} catch (e) {
+
 		return passed;
 	}
 
@@ -258,16 +284,14 @@ const runTests = co.wrap(function*({name, source, path}) {
 		ctrl.getJSText();
 		passed += 1;
 	} catch (e) {
+
 		return passed;
 	}
 
 	// unexpected runtime error(s)
 	try {
-		blib.runStringInNewContext(
-			source,
-			path,
-			globalContext
-			);
+		resolver.context = globalContext;
+		tangler.run(id, null, resolver);
 		try {
 			yield promise;
 			passed += 1;
@@ -275,6 +299,8 @@ const runTests = co.wrap(function*({name, source, path}) {
 			return passed;
 		}
 	} catch(e) {
+
+		console.log(cc.red(e.stack));
 		return passed;
 	}
 
@@ -296,13 +322,22 @@ co(function*(){
 		const res = yield test.promise;
 		const max = 5;
 
-		if (res === max)
-			console.log(`${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${cc.green('*')}`);
-		else {
+		let output;
+		if (res === max) {
+			output = (` ${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${win}`);
+			output += ('\t' + pad('', 30));
+		} else {
 			const msg = descriptionTable[res];
-			const str = `${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${cc.red('*')}`;
-			console.log(`${str}\t${msg}`);
+			const str = ` ${pad(i + 1, 5)}: ${pad(test.title, PADDING)}\t${fail}`;
+			output = (`${str}\t${pad(msg, 30)}`);
 		}
+
+		if (i % 2 === 0) {
+			console.log(cc.bgWhite(output));
+		} else {
+			console.log(output);
+		}
+
 		if (res === max)
 			passed++;
 		else
@@ -320,22 +355,26 @@ co(function*(){
 });
 
 co(function*() {
+	var i = 0;
 	for (let testFile of testFiles) {
-		let relativePath = `test/function/${testFile}`;
+		let relativePath = `${__dirname}/function/${testFile}`;
 		if (!testFile.endsWith('.bz')) {
 			continue;
 		}
 
 		for (var [name, source] of getTests(relativePath)) {
+			cache.set(i, {name, source});
 			pipeline.send({
 				title: name,
 				promise: runTests({
+					id: i,
 					name,
 					source,
 					path: relativePath
 				})
 			});
 
+			i++;
 			yield Promise.resolve();
 		}
 	}

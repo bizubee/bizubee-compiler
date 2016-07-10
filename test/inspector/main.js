@@ -7,7 +7,7 @@ const actions = {
 	compile() {
 		const source = bzEditor.getValue();
 		console.log(source);
-		jsEditor.setValue(parse(source).getJSText());
+		jsEditor.setValue(parse(source));
 	},
 	theme() {
 		const index = floor(themes.length * random());
@@ -19,7 +19,7 @@ window.onload = function(e) {
 	bzEditor = CodeMirror(document.getElementById('bz-editor'), {
 		value: Cookies.get('code') || '',
 		mode: 'bizubee',
-		theme: 'dracula',
+		theme: 'colorforth',
 		lineNumbers: true
 	});
 

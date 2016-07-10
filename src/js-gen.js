@@ -51,7 +51,7 @@ export function getJSDeclare(pattern, jvalue, type) {
 
 export function getJSMethodCall(names, args) {
     return new js.CallExpression(
-        exports.getJSMemberExpression(names), args);
+        getJSMemberExpression(names), args);
 }
 
 export function getJSMemberExpression(names) {
@@ -71,7 +71,7 @@ export function getJSIterable(target) {
     return new js.CallExpression(
         new js.MemberExpression(
             target,
-            exports.getJSMemberExpression(['Symbol', 'iterator']),
+            getJSMemberExpression(['Symbol', 'iterator']),
             true),
         []
         );
@@ -85,7 +85,7 @@ export function getJSConditional(identifier, def) {
             identifier
             );
     } else if (typeof identifier === 'string') {
-        return exports.getJSConditional(new js.Identifier(identifier), def);
+        return getJSConditional(new js.Identifier(identifier), def);
     } else {
         throw new Error('Conditional expression must use identifier!');
     }

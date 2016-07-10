@@ -1,6 +1,5 @@
 
 import * as js from './js-nodes';
-import escodegen from './dep/escodegen';
 import {Lines, Line} from './errors';
 import {Queue} from './collectibles';
 import vargen from './vargen';
@@ -21,7 +20,7 @@ const OKEY = Symbol('Options key');
 const IGNORE = Symbol('Ingorable properties');
 
 const EMPTY = new js.EmptyStatement();
-const LIB_PATH = "bizubee lib";
+const LIB_PATH = "bizubee utils";
 
 const binaryOperator = new Set([
     "==",
@@ -124,6 +123,11 @@ function assertLogicalOperator(operator) {
     }
 }
 
+function isArray(val) {
+    return !!val && !!val.constructor
+        && val.constructor.name === 'Array';
+}
+
 function assertAssignmentOperator(operator) {
     if (assignmentOperator.has(operator)) {
         return operator;
@@ -142,7 +146,7 @@ function assertUpdateOperator(operator) {
 
 
 function statement(jsExpr) {
-    if (jsExpr instanceof Array) {
+    if (isArray(jsExpr)) {
         let arr = [];
         for (let i = 0; i < jsExpr.length; i++) {
             arr.push(statement(jsExpr[i]));
@@ -211,7 +215,7 @@ export class Node {
                 continue;
             }
 
-            if (nd instanceof Array) {
+            if (isArray(nd)) {
                 for (let node of nd) {
                     if (node instanceof Node) {
                         node[PARENT_KEY] = this;
@@ -231,7 +235,7 @@ export class Node {
                 continue;
 
             let obj = this[key];
-            if (obj instanceof Array) {
+            if (isArray(obj)) {
                 for (let val of obj) {
                     if (!(val instanceof Node))
                         continue outer;
@@ -338,11 +342,6 @@ export class Node {
                 return current;
             }
 
-            if (current.type === "ExpressionStatement") {
-                if (current.parent === null) {
-                    console.log(JSON.stringify(current, null, 4));
-                }
-            }
             current = current.parent;
         }
     }
@@ -834,10 +833,13 @@ export class ForStatement extends Statement {
             );
 
         let body = [declare];
-        for (let line of this.body) {
-            body.push(line.toJS(o));
+        if (this.body instanceof BlockStatement) {
+            for (let line of this.body.body) {
+                body.push(line.toJS(o));
+            }
+        } else {
+            body.push(this.body.toJS(o));
         }
-
 
         var loop = new js.ForStatement(
             new js.BlockStatement(body),
@@ -2031,6 +2033,7 @@ export class Identifier extends Expression {
     }
 
     onBuild() {
+        super.onBuild();
         this.program.forbid(this.name);
     }
 
@@ -2081,7 +2084,7 @@ export class TemplateString extends Expression {
         this.parts = [];
         for (var part of parts) {
             // parts alternate between strings and arrays of tokens
-            if (part instanceof Array) {
+            if (isArray(part)) {
                 // if part is Array of tokens, parse then search for Expression in AST
                 // and reasign parent to this TemplateString
 
@@ -2334,7 +2337,7 @@ export class ValueExpression extends Expression {
     _toJS(o) {
         const parentFunc = this.getParentFunction();
         const body = this.statement.toJS(o);
-        var block = (body instanceof Array)?
+        var block = (isArray(body))?
             new js.BlockStatement(body) :
             new js.BlockStatement([body]);
 

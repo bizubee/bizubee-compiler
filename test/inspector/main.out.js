@@ -5918,7 +5918,7 @@ function getJSDeclare(pattern, jvalue, type) {
 
 function getJSMethodCall(names, args) {
     return new CallExpression$1(
-        exports.getJSMemberExpression(names), args);
+        getJSMemberExpression(names), args);
 }
 
 function getJSMemberExpression(names) {
@@ -5940,7 +5940,7 @@ const OKEY = Symbol('Options key');
 const IGNORE = Symbol('Ingorable properties');
 
 const EMPTY = new EmptyStatement();
-const LIB_PATH = "bizubee lib";
+const LIB_PATH = "bizubee utils";
 
 const assignmentOperator = new Set([
     "=",
@@ -6001,6 +6001,11 @@ function defined(val) {
     return val !== undefined && val !== null;
 }
 
+function isArray$2(val) {
+    return !!val && !!val.constructor
+        && val.constructor.name === 'Array';
+}
+
 function assertAssignmentOperator(operator) {
     if (assignmentOperator.has(operator)) {
         return operator;
@@ -6019,7 +6024,7 @@ function assertUpdateOperator(operator) {
 
 
 function statement(jsExpr) {
-    if (jsExpr instanceof Array) {
+    if (isArray$2(jsExpr)) {
         let arr = [];
         for (let i = 0; i < jsExpr.length; i++) {
             arr.push(statement(jsExpr[i]));
@@ -6077,7 +6082,7 @@ class Node {
                 continue;
             }
 
-            if (nd instanceof Array) {
+            if (isArray$2(nd)) {
                 for (let node of nd) {
                     if (node instanceof Node) {
                         node[PARENT_KEY] = this;
@@ -6097,7 +6102,7 @@ class Node {
                 continue;
 
             let obj = this[key];
-            if (obj instanceof Array) {
+            if (isArray$2(obj)) {
                 for (let val of obj) {
                     if (!(val instanceof Node))
                         continue outer;
@@ -6204,11 +6209,6 @@ class Node {
                 return current;
             }
 
-            if (current.type === "ExpressionStatement") {
-                if (current.parent === null) {
-                    console.log(JSON.stringify(current, null, 4));
-                }
-            }
             current = current.parent;
         }
     }
@@ -6700,10 +6700,13 @@ class ForStatement extends Statement {
             );
 
         let body = [declare];
-        for (let line of this.body) {
-            body.push(line.toJS(o));
+        if (this.body instanceof BlockStatement) {
+            for (let line of this.body.body) {
+                body.push(line.toJS(o));
+            }
+        } else {
+            body.push(this.body.toJS(o));
         }
-
 
         var loop = new ForStatement$1(
             new BlockStatement$1(body),
@@ -7897,6 +7900,7 @@ class Identifier extends Expression {
     }
 
     onBuild() {
+        super.onBuild();
         this.program.forbid(this.name);
     }
 
@@ -7947,7 +7951,7 @@ class TemplateString extends Expression {
         this.parts = [];
         for (var part of parts) {
             // parts alternate between strings and arrays of tokens
-            if (part instanceof Array) {
+            if (isArray$2(part)) {
                 // if part is Array of tokens, parse then search for Expression in AST
                 // and reasign parent to this TemplateString
 
@@ -8200,7 +8204,7 @@ class ValueExpression extends Expression {
     _toJS(o) {
         const parentFunc = this.getParentFunction();
         const body = this.statement.toJS(o);
-        var block = (body instanceof Array)?
+        var block = (isArray$2(body))?
             new BlockStatement$1(body) :
             new BlockStatement$1([body]);
 
@@ -8304,14 +8308,6 @@ var nodes = Object.freeze({
     ValueExpression: ValueExpression
 });
 
-/*
-interface ParserAPI {
-    forbidden(string) : bool;
-    getJSText(object) : string;
-    getJSTree(object) : Object;
-}
-*/
-
 // returns a ParserAPI as defined in parser-interface.js
 function control(tokens, parameters) {
 	let psr = getParser(parameters);
@@ -8383,7 +8379,8 @@ function getParser(params) {
 }
 
 function parse(string, parameters = {}) {
-	return parseString(string, parameters);
+	return parseString(string, parameters)
+		.getJSText();
 }
 
 function parseString(string, parameters) {
@@ -8392,7 +8389,7 @@ function parseString(string, parameters) {
 }
 
 
-function parseCharSrc(csrc, parameters) {
+function parseCharSrc(csrc, parameters = {}) {
 	let gen = tokenizeCharSrc(csrc);
 	parameters.source = csrc;
 	return control(gen, parameters);
@@ -8410,7 +8407,7 @@ const actions = {
 	compile() {
 		const source = bzEditor.getValue();
 		console.log(source);
-		jsEditor.setValue(parse(source).getJSText());
+		jsEditor.setValue(parse(source));
 	},
 	theme() {
 		const index = floor(themes.length * random());
@@ -8422,7 +8419,7 @@ window.onload = function(e) {
 	bzEditor = CodeMirror(document.getElementById('bz-editor'), {
 		value: Cookies.get('code') || '',
 		mode: 'bizubee',
-		theme: 'dracula',
+		theme: 'colorforth',
 		lineNumbers: true
 	});
 

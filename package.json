@@ -16,13 +16,16 @@
     "esvalid": "^1.1.0",
     "grunt": "^0.4.5",
     "grunt-bump": "^0.6.0",
+    "esprima": "^2.7.2",
     "grunt-jison": "^1.3.2",
     "jison": "GabrielRatener/jison",
+    "lazy-iterator": "0.0.3",
     "load-grunt-tasks": "^3.3.0",
-    "rollup": "^0.33.0"
+    "rollup": "^0.33.0",
+    "tangler": "GabrielRatener/tangler"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "tangler test/test.js"
   },
   "keywords": [
     "compiled",
@@ -32,10 +35,6 @@
     "block",
     "scope"
   ],
-  "preferGlobal": true,
-  "bin": {
-    "bizubee": "./index.js"
-  },
   "author": "Gabriel Ratener",
   "license": "MIT",
   "directories": {

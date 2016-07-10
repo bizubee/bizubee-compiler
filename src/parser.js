@@ -5,7 +5,6 @@ import {tokenizeCharSrc, refineTokens} from './lexer';
 import {Lines} from './errors';
 import {StringSource} from './source';
 import * as nodes from './bz-nodes';
-import {ParserAPI} from './parser-interface';
 
 // returns a ParserAPI as defined in parser-interface.js
 function control(tokens, parameters) {
@@ -78,7 +77,8 @@ function getParser(params) {
 }
 
 export function parse(string, parameters = {}) {
-	return parseString(string, parameters);
+	return parseString(string, parameters)
+		.getJSText();
 }
 
 export function parseString(string, parameters) {
@@ -87,7 +87,7 @@ export function parseString(string, parameters) {
 }
 
 
-export function parseCharSrc(csrc, parameters) {
+export function parseCharSrc(csrc, parameters = {}) {
 	let gen = tokenizeCharSrc(csrc);
 	parameters.source = csrc;
 	return control(gen, parameters);

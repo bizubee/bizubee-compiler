@@ -21,7 +21,7 @@
     var atProp = /^@[_A-Za-z$][_A-Za-z$0-9]*/;
 
     var wordOperators = wordRegexp(["and", "or", "not",
-                                    "is", "in"]);
+                                    "is", "in", "await", "yield"]);
     var indentKeywords = ["for", "while", "if", "else", "do"
                           , "try", "catch", "finally", "class"];
     var commonKeywords = ["var", "const", "break", "continue", "delete",
