@@ -20,13 +20,12 @@
     var identifiers = /^[_A-Za-z$][_A-Za-z$0-9]*/;
     var atProp = /^@[_A-Za-z$][_A-Za-z$0-9]*/;
 
-    var wordOperators = wordRegexp(["and", "or", "not",
-                                    "is", "in", "await", "yield"]);
-    var indentKeywords = ["for", "while", "if", "else", "do"
-                          , "try", "catch", "finally", "class"];
+    var indentKeywords = ["else", "do", "try", "finally"];
     var commonKeywords = ["var", "const", "break", "continue", "delete",
                           "in", "on", "new", "return", "then",
-                          "this", "@", "throw", "extends"];
+                          "this", "@", "throw", "extends", "and", "or", "not",
+                          "is", "in", "await", "yield", "for", "while", "if", 
+                          "catch", "class"];
 
     var keywords = wordRegexp(indentKeywords.concat(commonKeywords));
 
@@ -140,7 +139,7 @@
 
 
       // Handle operators and delimiters
-      if (stream.match(operators) || stream.match(wordOperators)) {
+      if (stream.match(operators)) {
         return "operator";
       }
       if (stream.match(delimiters)) {

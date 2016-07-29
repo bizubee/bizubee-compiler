@@ -1,15 +1,16 @@
 {
   "name": "bizubee-compiler",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The most intense programming language on Earth!",
-  "main": "bizubee.js",
+  "main": "index.js",
   "jsnext:main": "src/parser.js",
   "dependencies": {
     "acorn": "GabrielRatener/acorn",
     "cli-color": "^1.0.0",
     "escodegen": "^1.8.0",
     "minimist": "^1.2.0",
-    "node-string-pad": "0.0.4"
+    "node-string-pad": "0.0.4",
+    "tangler": "GabrielRatener/tangler"
   },
   "devDependencies": {
     "co": "^4.6.0",
@@ -22,7 +23,6 @@
     "lazy-iterator": "0.0.3",
     "load-grunt-tasks": "^3.3.0",
     "rollup": "^0.33.0",
-    "tangler": "GabrielRatener/tangler"
   },
   "scripts": {
     "test": "tangler test/test.js"
