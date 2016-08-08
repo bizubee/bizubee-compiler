@@ -223,7 +223,7 @@ const resolver = {
 	}
 }
 
-const blib = tangler.require('bizubee utils', null, resolver);
+const blib = tangler.require('bizubee utils', null, {resolver});
 
 const runTests = co.wrap(function*({name, source, path, id}) {
 	var promise;
@@ -291,7 +291,8 @@ const runTests = co.wrap(function*({name, source, path, id}) {
 	// unexpected runtime error(s)
 	try {
 		resolver.context = globalContext;
-		tangler.run(id, null, resolver);
+		tangler.run(id, null, {resolver});
+
 		try {
 			yield promise;
 			passed += 1;
